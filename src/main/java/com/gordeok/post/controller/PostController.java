@@ -15,12 +15,15 @@ public class PostController {
     private final PostService postService;
 
     // 게시글 목록 조회 (홈화면)
-    // GET /api/posts?page=0&size=10
+    // GET /api/posts?page=0&size=10&keyword=검색어&idolId=1&sort=latest
     @GetMapping
     public ResponseEntity<Page<PostResponseDto>> getPostList(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(postService.getPostList(page, size));
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long idolId,
+            @RequestParam(defaultValue = "latest") String sort) {
+        return ResponseEntity.ok(postService.getPostList(page, size, keyword, idolId, sort));
     }
 
     // 게시글 상세 조회

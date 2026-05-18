@@ -1,40 +1,66 @@
 package com.gordeok.post.entity;
 
+import com.gordeok.user.entity.User;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "posts")
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long userId;
+    // 작성자
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    @Column(nullable = false)
-    private Long idolId;
-
-    @Column(nullable = false)
-    private Long albumId;
-
-    @Column(nullable = false)
     private String title;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private Integer totalPrice;
+    private String imageUrl;
 
-    private Integer shippingFee;
+    private String idolName;
 
-    private String status;
+    private String albumName;
+
+    private String selectionType;
+
+    private Boolean albumIncluded;
+
+    private String shippingFeeType;
+
+    @Builder.Default
+    private String status = "OPEN";
+
+    @Builder.Default
+    private Integer viewCount = 0;
+
+    @Builder.Default
+    private Integer scrapCount = 0;
 
     private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

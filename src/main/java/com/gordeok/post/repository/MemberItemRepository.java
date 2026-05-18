@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface MemberItemRepository extends JpaRepository<MemberItem, Long> {
 
-    // 게시글 id로 멤버 아이템 목록 조회
+    // 게시글로 멤버 아이템 목록 조회 (Post 객체 관계)
     List<MemberItem> findByPostId(Long postId);
 }

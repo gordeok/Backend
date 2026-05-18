@@ -18,5 +18,8 @@ public class Idol {
     @Column(nullable = false)
     private String name;
 
+    // 프론트엔드 string ID와 호환 (예: "boynextdoor", "bts", "newjeans")
+    private String code;
+
     private LocalDateTime createdAt;
 }

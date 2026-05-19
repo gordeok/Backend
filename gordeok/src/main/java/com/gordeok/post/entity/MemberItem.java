@@ -3,7 +3,6 @@ package com.gordeok.post.entity;
 import com.gordeok.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -48,5 +47,14 @@ public class MemberItem {
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void reserve(User buyer) {
+        this.status = "RESERVED";
+        this.buyer = buyer;
+    }
+
+    public void complete() {
+        this.status = "COMPLETED";
     }
 }

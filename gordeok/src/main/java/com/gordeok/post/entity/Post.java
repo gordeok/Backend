@@ -23,22 +23,16 @@ public class Post {
     @JoinColumn(name = "user_id")
     private User user;
 
+    // 게시글 제목
     private String title;
 
     @Column(columnDefinition = "TEXT")
     private String description;
-
     private String imageUrl;
-
     private String idolName;
-
     private String albumName;
-
-    private String selectionType;
-
-    private Boolean albumIncluded;
-
-    private String shippingFeeType;
+    private String components;
+    private String deliveryMethods;
 
     @Builder.Default
     private String status = "OPEN";

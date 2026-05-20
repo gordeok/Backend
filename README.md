@@ -2,7 +2,7 @@
 
 ## Branch 규칙
 - 브랜치는 기능 단위로 생성
-- 예시 : feat/ej3131
+- feat/chat, feat/community, feat/mypage
 
 ## Commit 규칙
 - `feat` : 기능 추가
@@ -15,4 +15,4 @@
 ## 예시
 - `feat`: 채팅 목록 API 구현
 - `fix`: 채팅방 조회 오류 수정
-- `merge`: feat/ej3131 → main
+- `merge`: feat/chat → main

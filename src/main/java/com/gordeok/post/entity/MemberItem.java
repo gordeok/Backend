@@ -49,4 +49,18 @@ public class MemberItem {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void reserve(User buyer) {
+        this.status = "RESERVED";
+        this.buyer = buyer;
+    }
+
+    public void complete() {
+        this.status = "COMPLETED";
+    }
+
+    public void cancel() {
+        this.status = "AVAILABLE";
+        this.buyer = null;
+    }
 }

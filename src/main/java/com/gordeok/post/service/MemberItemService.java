@@ -4,12 +4,14 @@ import com.gordeok.chat.entity.ChatParticipant;
 import com.gordeok.chat.entity.ChatRoom;
 import com.gordeok.chat.repository.ChatParticipantRepository;
 import com.gordeok.chat.repository.ChatRoomRepository;
+import com.gordeok.participation.entity.Participation;
+import com.gordeok.participation.repository.ParticipationRepository;
 import com.gordeok.post.dto.MemberSelectRequestDto;
 import com.gordeok.post.dto.MemberSelectResponseDto;
 import com.gordeok.post.entity.MemberItem;
-import com.gordeok.post.entity.Participation;
 import com.gordeok.post.repository.MemberItemRepository;
-import com.gordeok.post.repository.ParticipationRepository;
+import com.gordeok.user.entity.User;
+import com.gordeok.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ public class MemberItemService {
     private final ParticipationRepository participationRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatParticipantRepository chatParticipantRepository;
+    private final UserRepository userRepository;
 
     // 멤버 자리 선택 → 참여글 저장 → 채팅방 생성/입장
     @Transactional
@@ -34,28 +37,27 @@ public class MemberItemService {
             throw new RuntimeException("이미 선택된 멤버 슬롯입니다.");
         }
 
-        // 2. MemberItem status → RESERVED + buyer 설정
-        MemberItem updated = MemberItem.builder()
-                .id(memberItem.getId())
-                .post(memberItem.getPost())
-                .memberName(memberItem.getMemberName())
-                .price(memberItem.getPrice())
-                .status("RESERVED")
-                .build();
-        memberItemRepository.save(updated);
+        // 2. 구매자 User 조회
+        User buyer = userRepository.findById(dto.getBuyerId())
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        // 3. 참여글 정보 저장
+        // 3. MemberItem status → RESERVED + buyer 설정
+        memberItem.reserve(buyer);
+        memberItemRepository.save(memberItem);
+
+        // 4. 참여글 정보 저장 (팀원 Participation 구조 사용)
         Participation participation = Participation.builder()
-                .memberItemId(memberItemId)
-                .buyerId(dto.getBuyerId())
-                .recipientName(dto.getRecipientName())
+                .post(memberItem.getPost())
+                .memberItem(memberItem)
+                .buyer(buyer)
+                .realName(dto.getRecipientName())
                 .phoneNumber(dto.getPhoneNumber())
-                .convenienceStore(dto.getConvenienceStore())
-                .request(dto.getRequest())
+                .storeName(dto.getConvenienceStore())
+                .requestMessage(dto.getRequest())
                 .build();
         participationRepository.save(participation);
 
-        // 4. 해당 Post의 ChatRoom 조회 또는 생성
+        // 5. 해당 Post의 ChatRoom 조회 또는 생성
         Long postId = memberItem.getPost().getId();
         ChatRoom chatRoom = chatRoomRepository.findByPostId(postId)
                 .orElseGet(() -> chatRoomRepository.save(
@@ -65,7 +67,7 @@ public class MemberItemService {
                                 .build()
                 ));
 
-        // 5. 판매자를 SELLER로 추가 (처음 한 번만)
+        // 6. 판매자를 SELLER로 추가 (처음 한 번만)
         Long sellerId = memberItem.getPost().getUser().getId();
         if (!chatParticipantRepository.existsByChatroomIdAndUserId(chatRoom.getId(), sellerId)) {
             chatParticipantRepository.save(
@@ -77,12 +79,12 @@ public class MemberItemService {
             );
         }
 
-        // 6. 구매자를 BUYER로 추가
-        if (!chatParticipantRepository.existsByChatroomIdAndUserId(chatRoom.getId(), dto.getBuyerId())) {
+        // 7. 구매자를 BUYER로 추가
+        if (!chatParticipantRepository.existsByChatroomIdAndUserId(chatRoom.getId(), buyer.getId())) {
             chatParticipantRepository.save(
                     ChatParticipant.builder()
                             .chatroomId(chatRoom.getId())
-                            .userId(dto.getBuyerId())
+                            .userId(buyer.getId())
                             .role("BUYER")
                             .build()
             );
@@ -102,17 +104,11 @@ public class MemberItemService {
         }
 
         // status → AVAILABLE 복구
-        MemberItem cancelled = MemberItem.builder()
-                .id(memberItem.getId())
-                .post(memberItem.getPost())
-                .memberName(memberItem.getMemberName())
-                .price(memberItem.getPrice())
-                .status("AVAILABLE")
-                .build();
-        memberItemRepository.save(cancelled);
+        memberItem.cancel();
+        memberItemRepository.save(memberItem);
 
         // 참여글 삭제
-        participationRepository.findByMemberItemIdAndBuyerId(memberItemId, buyerId)
+        participationRepository.findByMemberItem(memberItem)
                 .ifPresent(participationRepository::delete);
     }
 }

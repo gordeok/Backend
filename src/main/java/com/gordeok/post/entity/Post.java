@@ -40,6 +40,11 @@ public class Post {
 
     private String shippingFeeType;
 
+    // 팀원 코드 필드 (merge 대응)
+    private String components;
+
+    private String deliveryMethods;
+
     @Builder.Default
     private String status = "OPEN";
 

@@ -7,9 +7,7 @@ import com.gordeok.chat.repository.ChatRoomRepository;
 import com.gordeok.post.dto.MemberSelectRequestDto;
 import com.gordeok.post.dto.MemberSelectResponseDto;
 import com.gordeok.post.entity.MemberItem;
-import com.gordeok.post.entity.Participation;
 import com.gordeok.post.repository.MemberItemRepository;
-import com.gordeok.post.repository.ParticipationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberItemService {
 
     private final MemberItemRepository memberItemRepository;
-    private final ParticipationRepository participationRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatParticipantRepository chatParticipantRepository;
 
@@ -44,16 +41,6 @@ public class MemberItemService {
                 .build();
         memberItemRepository.save(updated);
 
-        // 3. 참여글 정보 저장
-        Participation participation = Participation.builder()
-                .memberItemId(memberItemId)
-                .buyerId(dto.getBuyerId())
-                .recipientName(dto.getRecipientName())
-                .phoneNumber(dto.getPhoneNumber())
-                .convenienceStore(dto.getConvenienceStore())
-                .request(dto.getRequest())
-                .build();
-        participationRepository.save(participation);
 
         // 4. 해당 Post의 ChatRoom 조회 또는 생성
         Long postId = memberItem.getPost().getId();
@@ -110,9 +97,6 @@ public class MemberItemService {
                 .status("AVAILABLE")
                 .build();
         memberItemRepository.save(cancelled);
-
-        // 참여글 삭제
-        participationRepository.findByMemberItemIdAndBuyerId(memberItemId, buyerId)
-                .ifPresent(participationRepository::delete);
+        
     }
 }

@@ -7,29 +7,31 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "community_comments")
+@Table(
+        name = "community_likes",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"post_id", "user_id"})
+        }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Comment {
+public class CommunityLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 댓글이 달린 게시글
+    // 좋아요가 눌린 게시글
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
     private CommunityPost post;
 
-    // 댓글 작성자
+    // 좋아요 누른 사용자
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;

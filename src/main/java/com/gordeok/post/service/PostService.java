@@ -1,6 +1,11 @@
 package com.gordeok.post.service;
 
 import com.gordeok.bookmark.repository.BookmarkRepository;
+import com.gordeok.global.AiImageClient;
+import com.gordeok.idol.dto.IdolMemberResponseDto;
+import com.gordeok.idol.entity.Idol;
+import com.gordeok.idol.repository.IdolMemberRepository;
+import com.gordeok.idol.repository.IdolRepository;
 import com.gordeok.post.dto.*;
 import com.gordeok.post.entity.MemberItem;
 import com.gordeok.post.entity.Post;
@@ -14,7 +19,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,8 +33,10 @@ public class PostService {
     private final PostRepository postRepository;
     private final MemberItemRepository memberItemRepository;
     private final UserRepository userRepository;
+    private final AiImageClient aiImageClient;
+    private final IdolRepository idolRepository;
+    private final IdolMemberRepository idolMemberRepository;
 
-    // 분철 글 작성
     @Transactional
     public CreatePostResponseDto createPost(Long userId, CreatePostRequestDto request) {
         User user = userRepository.findById(userId)
@@ -58,7 +67,6 @@ public class PostService {
         return new CreatePostResponseDto(savedPost.getId(), "분철 게시글이 등록되었습니다.");
     }
 
-    // 게시글 목록 조회 (검색, 아이돌 필터, 정렬 포함)
     public Page<PostResponseDto> getPostList(int page, int size, String keyword, String idolName, String sort) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Post> posts;
@@ -88,7 +96,6 @@ public class PostService {
         return posts.map(this::buildPostResponseDto);
     }
 
-    // 게시글 상세 조회 (북마크 여부 포함)
     public PostDetailResponseDto getPostDetail(Long postId, Long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
@@ -117,12 +124,39 @@ public class PostService {
         );
     }
 
-    // Post → PostResponseDto 변환 (공통 로직)
     private PostResponseDto buildPostResponseDto(Post post) {
         List<MemberItemResponseDto> memberItems = memberItemRepository.findByPostId(post.getId())
                 .stream()
                 .map(MemberItemResponseDto::new)
                 .collect(Collectors.toList());
         return new PostResponseDto(post, memberItems);
+    }
+
+    public ImageAnalyzeResponseDto analyzeImage(MultipartFile image) throws IOException {
+        AiPredictResponse aiResult = aiImageClient.predict(image);
+
+        List<Idol> idols = idolRepository.findByNameContainingOrderByNameAsc(aiResult.getGroup());
+
+        if (idols.isEmpty()) {
+            return new ImageAnalyzeResponseDto(
+                    aiResult.getGroup(),
+                    aiResult.getProduct(),
+                    List.of(),
+                    aiResult.isConfident()
+            );
+        }
+
+        Long idolId = idols.get(0).getId();
+        List<IdolMemberResponseDto> members = idolMemberRepository.findByIdolId(idolId)
+                .stream()
+                .map(IdolMemberResponseDto::new)
+                .toList();
+
+        return new ImageAnalyzeResponseDto(
+                aiResult.getGroup(),
+                aiResult.getProduct(),
+                members,
+                aiResult.isConfident()
+        );
     }
 }

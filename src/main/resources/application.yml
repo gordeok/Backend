@@ -23,8 +23,13 @@ ai:
   server:
     url: http://localhost:8001
 
+# 사기 탐지 AI 서버
+fraud:
+  server:
+    url: http://localhost:8003
+
 # 로컬 파일 업로드 설정
 file:
   upload:
-    dir: ./uploads          # 서버 실행 위치 기준 상대 경로
-    url-prefix: /uploads    # 외부에서 접근할 URL prefix
+    dir: ./uploads
+    url-prefix: /uploads

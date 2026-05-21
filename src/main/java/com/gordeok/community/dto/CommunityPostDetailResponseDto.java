@@ -1,0 +1,61 @@
+package com.gordeok.community.dto;
+
+import com.gordeok.community.entity.CommunityPost;
+import lombok.Getter;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+
+@Getter
+public class CommunityPostDetailResponseDto {
+
+    private Long postId;
+    private String category;
+    private String title;
+    private String content;
+    private List<String> imageUrls;
+    private Long authorId;
+    private String authorNickname;
+    private String authorProfileImage;
+    private Integer likeCount;
+    private Integer commentCount;
+    private Integer viewCount;
+    private Boolean liked;
+    private LocalDateTime createdAt;
+    private List<CommunityCommentResponseDto> comments;
+
+    public CommunityPostDetailResponseDto(
+            CommunityPost post,
+            List<CommunityCommentResponseDto> comments,
+            boolean liked
+    ) {
+        this.postId = post.getId();
+        this.category = post.getCategory();
+        this.title = post.getTitle();
+        this.content = post.getContent();
+        this.imageUrls = splitImageUrls(post.getImageUrls());
+
+        this.authorId = post.getUser().getId();
+        this.authorNickname = post.getUser().getNickname();
+        this.authorProfileImage = post.getUser().getProfileImage();
+
+        this.likeCount = post.getLikeCount();
+        this.commentCount = post.getCommentCount();
+        this.viewCount = post.getViewCount();
+        this.liked = liked;
+        this.createdAt = post.getCreatedAt();
+        this.comments = comments;
+    }
+
+    private List<String> splitImageUrls(String imageUrls) {
+        if (imageUrls == null || imageUrls.isBlank()) {
+            return List.of();
+        }
+
+        return Arrays.stream(imageUrls.split(","))
+                .map(String::trim)
+                .filter(url -> !url.isBlank())
+                .toList();
+    }
+}

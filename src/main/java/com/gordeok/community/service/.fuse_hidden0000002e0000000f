@@ -1,0 +1,183 @@
+package com.gordeok.community.service;
+
+import com.gordeok.community.dto.*;
+import com.gordeok.community.entity.Comment;
+import com.gordeok.community.entity.CommunityLike;
+import com.gordeok.community.entity.CommunityPost;
+import com.gordeok.community.repository.CommentRepository;
+import com.gordeok.community.repository.CommunityLikeRepository;
+import com.gordeok.community.repository.CommunityPostRepository;
+import com.gordeok.user.entity.User;
+import com.gordeok.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+public class CommunityService {
+
+    private final CommunityPostRepository communityPostRepository;
+    private final CommentRepository commentRepository;
+    private final CommunityLikeRepository communityLikeRepository;
+    private final UserRepository userRepository;
+
+    // 커뮤니티 글 목록 조회
+    @Transactional(readOnly = true)
+    public Page<CommunityPostListResponseDto> getPostList(
+            String category,
+            String sort,
+            int page,
+            int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        boolean isAllCategory = category == null
+                || category.isBlank()
+                || category.equalsIgnoreCase("ALL");
+
+        boolean isLikeSort = sort != null && sort.equalsIgnoreCase("likes");
+
+        Page<CommunityPost> posts;
+
+        if (isAllCategory) {
+            posts = isLikeSort
+                    ? communityPostRepository.findAllByOrderByLikeCountDescCreatedAtDesc(pageable)
+                    : communityPostRepository.findAllByOrderByCreatedAtDesc(pageable);
+        } else {
+            posts = isLikeSort
+                    ? communityPostRepository.findByCategoryOrderByLikeCountDescCreatedAtDesc(category, pageable)
+                    : communityPostRepository.findByCategoryOrderByCreatedAtDesc(category, pageable);
+        }
+
+        return posts.map(CommunityPostListResponseDto::new);
+    }
+
+    // 커뮤니티 글 상세 조회
+    @Transactional
+    public CommunityPostDetailResponseDto getPostDetail(Long postId, Long userId) {
+        CommunityPost post = findPost(postId);
+
+        post.increaseViewCount();
+
+        List<CommunityCommentResponseDto> comments =
+                commentRepository.findByPostIdOrderByCreatedAtAsc(postId)
+                        .stream()
+                        .map(CommunityCommentResponseDto::new)
+                        .toList();
+
+        boolean liked = false;
+
+        if (userId != null) {
+            liked = communityLikeRepository.existsByPostIdAndUserId(postId, userId);
+        }
+
+        return new CommunityPostDetailResponseDto(post, comments, liked);
+    }
+
+    // 커뮤니티 글 작성
+    @Transactional
+    public CreateCommunityPostResponseDto createPost(
+            Long userId,
+            CreateCommunityPostRequestDto request
+    ) {
+        User user = findUser(userId);
+
+        CommunityPost post = CommunityPost.builder()
+                .user(user)
+                .category(request.getCategory())
+                .title(request.getTitle())
+                .content(request.getContent())
+                .imageUrls(joinImageUrls(request.getImageUrls()))
+                .build();
+
+        CommunityPost savedPost = communityPostRepository.save(post);
+
+        return new CreateCommunityPostResponseDto(
+                savedPost.getId(),
+                "커뮤니티 게시글이 등록되었습니다."
+        );
+    }
+
+    // 댓글 작성
+    @Transactional
+    public CommunityCommentResponseDto createComment(
+            Long postId,
+            Long userId,
+            CreateCommunityCommentRequestDto request
+    ) {
+        CommunityPost post = findPost(postId);
+        User user = findUser(userId);
+
+        Comment comment = Comment.builder()
+                .post(post)
+                .user(user)
+                .content(request.getContent())
+                .build();
+
+        Comment savedComment = commentRepository.save(comment);
+
+        post.increaseCommentCount();
+
+        return new CommunityCommentResponseDto(savedComment);
+    }
+
+    // 좋아요 추가 / 취소
+    @Transactional
+    public ToggleLikeResponseDto toggleLike(Long postId, Long userId) {
+        CommunityPost post = findPost(postId);
+        User user = findUser(userId);
+
+        Optional<CommunityLike> likeOptional =
+                communityLikeRepository.findByPostIdAndUserId(postId, userId);
+
+        if (likeOptional.isPresent()) {
+            communityLikeRepository.delete(likeOptional.get());
+            post.decreaseLikeCount();
+
+            return new ToggleLikeResponseDto(
+                    false,
+                    post.getLikeCount(),
+                    "좋아요가 취소되었습니다."
+            );
+        }
+
+        CommunityLike like = CommunityLike.builder()
+                .post(post)
+                .user(user)
+                .build();
+
+        communityLikeRepository.save(like);
+        post.increaseLikeCount();
+
+        return new ToggleLikeResponseDto(
+                true,
+                post.getLikeCount(),
+                "좋아요가 추가되었습니다."
+        );
+    }
+
+    private CommunityPost findPost(Long postId) {
+        return communityPostRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("커뮤니티 게시글을 찾을 수 없습니다."));
+    }
+
+    private User findUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    }
+
+    private String joinImageUrls(List<String> imageUrls) {
+        if (imageUrls == null || imageUrls.isEmpty()) {
+            return "";
+        }
+
+        return String.join(",", imageUrls);
+    }
+}

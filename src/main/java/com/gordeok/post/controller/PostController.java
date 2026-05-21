@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -46,5 +49,12 @@ public class PostController {
             @RequestParam(required = false) Long userId
     ) {
         return ResponseEntity.ok(postService.getPostDetail(postId, userId));
+    }
+
+    @PostMapping("/analyze-image")
+    public ResponseEntity<ImageAnalyzeResponseDto> analyzeImage(
+            @RequestParam("image") MultipartFile image
+    ) throws IOException {
+        return ResponseEntity.ok(postService.analyzeImage(image));
     }
 }

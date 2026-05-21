@@ -22,9 +22,8 @@ public class CreatePostRequestDto {
 
     private String albumName;
 
-    private String selectionType;   // 선택 방식 (B2 신규 필드)
-    private Boolean albumIncluded;  // 앨범 포함 여부 (B2 신규 필드)
-    private String shippingFeeType; // 배송비 방식 (B2 신규 필드)
+    private List<String> components;    // 구성품 설정
+    private String shippingFeeType;     // 배송 방법
 
     @NotNull(message = "멤버 아이템 정보를 입력해주세요.")
     private List<MemberItemRequestDto> memberItems;

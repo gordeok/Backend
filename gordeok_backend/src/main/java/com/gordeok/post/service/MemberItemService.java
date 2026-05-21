@@ -20,29 +20,21 @@ public class MemberItemService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatParticipantRepository chatParticipantRepository;
 
-    // 멤버 자리 선택 → 참여글 저장 → 채팅방 생성/입장
+    // 채팅방 입장 → COMPLETED(모집완료)로 전환
     @Transactional
     public MemberSelectResponseDto selectMember(Long memberItemId, MemberSelectRequestDto dto) {
-        // 1. MemberItem 조회 및 상태 확인
         MemberItem memberItem = memberItemRepository.findById(memberItemId)
                 .orElseThrow(() -> new RuntimeException("멤버 슬롯을 찾을 수 없습니다."));
 
-        if (!"AVAILABLE".equals(memberItem.getStatus())) {
-            throw new RuntimeException("이미 선택된 멤버 슬롯입니다.");
+        // 참여글이 작성된(RESERVED) 상태에서만 채팅방 입장 가능
+        if (!"RESERVED".equals(memberItem.getStatus())) {
+            throw new RuntimeException("참여글이 작성된 상태에서만 채팅방에 입장할 수 있습니다.");
         }
 
-        // 2. MemberItem status → RESERVED + buyer 설정
-        MemberItem updated = MemberItem.builder()
-                .id(memberItem.getId())
-                .post(memberItem.getPost())
-                .memberName(memberItem.getMemberName())
-                .price(memberItem.getPrice())
-                .status("RESERVED")
-                .build();
-        memberItemRepository.save(updated);
+        // 채팅방 입장 시 COMPLETED(모집완료)로 변경
+        memberItem.complete();
+        memberItemRepository.save(memberItem);
 
-
-        // 4. 해당 Post의 ChatRoom 조회 또는 생성
         Long postId = memberItem.getPost().getId();
         ChatRoom chatRoom = chatRoomRepository.findByPostId(postId)
                 .orElseGet(() -> chatRoomRepository.save(
@@ -52,7 +44,6 @@ public class MemberItemService {
                                 .build()
                 ));
 
-        // 5. 판매자를 SELLER로 추가 (처음 한 번만)
         Long sellerId = memberItem.getPost().getUser().getId();
         if (!chatParticipantRepository.existsByChatroomIdAndUserId(chatRoom.getId(), sellerId)) {
             chatParticipantRepository.save(
@@ -64,7 +55,6 @@ public class MemberItemService {
             );
         }
 
-        // 6. 구매자를 BUYER로 추가
         if (!chatParticipantRepository.existsByChatroomIdAndUserId(chatRoom.getId(), dto.getBuyerId())) {
             chatParticipantRepository.save(
                     ChatParticipant.builder()
@@ -78,7 +68,7 @@ public class MemberItemService {
         return new MemberSelectResponseDto(chatRoom.getId(), "채팅방에 입장했습니다.");
     }
 
-    // 멤버 선택 취소
+    // 멤버 선택 취소 (RESERVED → AVAILABLE 복구)
     @Transactional
     public void cancelMember(Long memberItemId, Long buyerId) {
         MemberItem memberItem = memberItemRepository.findById(memberItemId)
@@ -88,7 +78,6 @@ public class MemberItemService {
             throw new RuntimeException("예약 중인 슬롯이 아닙니다.");
         }
 
-        // status → AVAILABLE 복구
         MemberItem cancelled = MemberItem.builder()
                 .id(memberItem.getId())
                 .post(memberItem.getPost())
@@ -97,6 +86,5 @@ public class MemberItemService {
                 .status("AVAILABLE")
                 .build();
         memberItemRepository.save(cancelled);
-        
     }
 }

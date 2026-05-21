@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "posts")
@@ -18,7 +19,6 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 작성자
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
@@ -34,9 +34,10 @@ public class Post {
 
     private String albumName;
 
-    private String selectionType;
-
-    private Boolean albumIncluded;
+    @ElementCollection
+    @CollectionTable(name = "post_components", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "component")
+    private List<String> components;
 
     private String shippingFeeType;
 

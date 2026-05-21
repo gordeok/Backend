@@ -32,34 +32,29 @@ public class ParticipationService {
     ) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("사용자를 찾을 수 없습니다.")
-                );
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("게시글을 찾을 수 없습니다.")
-                );
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
         MemberItem memberItem = memberItemRepository.findById(memberItemId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("멤버를 찾을 수 없습니다.")
-                );
+                .orElseThrow(() -> new IllegalArgumentException("멤버를 찾을 수 없습니다."));
 
         if (!memberItem.getPost().getId().equals(postId)) {
             throw new IllegalArgumentException("해당 게시글의 멤버가 아닙니다.");
         }
 
-        if (!memberItem.getStatus().equals("AVAILABLE")
-                && !memberItem.getStatus().equals("RESERVED")) {
-            throw new IllegalArgumentException("이미 모집 완료된 멤버입니다.");
+        // AVAILABLE 상태만 참여 가능
+        if (!"AVAILABLE".equals(memberItem.getStatus())) {
+            throw new IllegalArgumentException("이미 참여 중이거나 모집 완료된 멤버입니다.");
         }
 
         if (participationRepository.existsByMemberItemId(memberItemId)) {
             throw new IllegalArgumentException("이미 참여글이 작성된 멤버입니다.");
         }
 
-        memberItem.complete();
+        // 참여글 작성 시 RESERVED(예약중)로 변경
+        memberItem.reserve(user);
 
         Participation participation = Participation.builder()
                 .post(post)
@@ -73,12 +68,12 @@ public class ParticipationService {
 
         Participation savedParticipation = participationRepository.save(participation);
 
-        Long chatRoomId = null; // 채팅방 기능 만들기 전까지 임시값
+        Long chatRoomId = null;
 
         return new CreateParticipationResponseDto(
                 savedParticipation.getId(),
                 chatRoomId,
-                memberItem.getStatus(),
+                memberItem.getStatus(),     // "RESERVED" 반환
                 "분철 참여글이 작성되었습니다."
         );
     }

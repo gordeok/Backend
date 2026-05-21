@@ -15,7 +15,7 @@ public class PostDetailResponseDto {
     private String imageUrl;
     private String idolName;
     private String albumName;
-    private String selectionType;
+    private List<String> components;
     private String shippingFeeType;
     private String status;
     private Integer scrapCount;

@@ -27,7 +27,6 @@ public class PostService {
     private final MemberItemRepository memberItemRepository;
     private final UserRepository userRepository;
 
-    // 분철 글 작성
     @Transactional
     public CreatePostResponseDto createPost(Long userId, CreatePostRequestDto request) {
         User user = userRepository.findById(userId)
@@ -40,8 +39,7 @@ public class PostService {
                 .imageUrl(request.getImageUrl())
                 .idolName(request.getIdolName())
                 .albumName(request.getAlbumName())
-                .selectionType(request.getSelectionType())
-                .albumIncluded(request.getAlbumIncluded())
+                .components(request.getComponents())
                 .shippingFeeType(request.getShippingFeeType())
                 .build();
 
@@ -59,7 +57,6 @@ public class PostService {
         return new CreatePostResponseDto(savedPost.getId(), "분철 게시글이 등록되었습니다.");
     }
 
-    // 게시글 목록 조회 (검색, 아이돌 필터, 정렬 포함)
     public Page<PostResponseDto> getPostList(int page, int size, String keyword, String idolName, String sort) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Post> posts;
@@ -89,7 +86,6 @@ public class PostService {
         return posts.map(this::buildPostResponseDto);
     }
 
-    // 게시글 상세 조회 (북마크 여부 포함)
     public PostDetailResponseDto getPostDetail(Long postId, Long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
@@ -108,7 +104,7 @@ public class PostService {
                 post.getImageUrl(),
                 post.getIdolName(),
                 post.getAlbumName(),
-                post.getSelectionType(),
+                post.getComponents(),
                 post.getShippingFeeType(),
                 post.getStatus(),
                 post.getScrapCount(),
@@ -118,7 +114,6 @@ public class PostService {
         );
     }
 
-    // Post → PostResponseDto 변환 (공통 로직)
     private PostResponseDto buildPostResponseDto(Post post) {
         List<MemberItemResponseDto> memberItems = memberItemRepository.findByPostId(post.getId())
                 .stream()

@@ -2,6 +2,7 @@ package com.gordeok.post.controller;
 
 import com.gordeok.post.dto.CreatePostRequestDto;
 import com.gordeok.post.dto.CreatePostResponseDto;
+import com.gordeok.post.dto.ImageAnalyzeResponseDto;
 import com.gordeok.post.dto.PostDetailResponseDto;
 import com.gordeok.post.dto.PostResponseDto;
 import com.gordeok.post.service.PostService;

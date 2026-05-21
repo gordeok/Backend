@@ -33,6 +33,9 @@ dependencies {
 	// WebSocket (채팅)
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
+	// WebClient (사기탐지 AI 비동기 호출)
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
 	// MySQL
 	runtimeOnly 'com.mysql:mysql-connector-j'
 

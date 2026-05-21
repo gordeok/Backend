@@ -16,3 +16,7 @@ server:
 ai:
   server:
     url: http://localhost:8001
+
+fraud:
+  server:
+    url: http://localhost:8003

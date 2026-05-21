@@ -16,15 +16,12 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 화면의 '아이디'
     @Column(nullable = false, unique = true)
     private String email;
 
-    // 암호화된 비밀번호 저장
     @Column(nullable = false)
     private String password;
 
-    // 화면의 '이름'
     @Column(nullable = false)
     private String nickname;
 
@@ -33,15 +30,29 @@ public class User {
     @Builder.Default
     private Integer trustScore = 0;
 
+    // 사기 신고 이력 유무 (Report 테이블 count > 0 시 true)
+    @Builder.Default
+    private Boolean hasScamReport = false;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+        if (this.trustScore == null) this.trustScore = 0;
+        if (this.hasScamReport == null) this.hasScamReport = false;
+    }
 
-        if (this.trustScore == null) {
-            this.trustScore = 0;
-        }
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void updateProfileImage(String profileImageUrl) {
+        this.profileImage = profileImageUrl;
+    }
+
+    public void markScamReport() {
+        this.hasScamReport = true;
     }
 }

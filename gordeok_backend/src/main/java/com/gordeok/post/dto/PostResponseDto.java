@@ -18,8 +18,7 @@ public class PostResponseDto {
     private String title;
     private String description;
     private String imageUrl;
-    private String selectionType;
-    private Boolean albumIncluded;
+    private List<String> components;
     private String shippingFeeType;
     private String status;             // 한글 상태값: "모집중", "모집완료"
     private Integer viewCount;
@@ -38,8 +37,7 @@ public class PostResponseDto {
         this.title = post.getTitle();
         this.description = post.getDescription();
         this.imageUrl = post.getImageUrl();
-        this.selectionType = post.getSelectionType();
-        this.albumIncluded = post.getAlbumIncluded();
+        this.components = post.getComponents();
         this.shippingFeeType = post.getShippingFeeType();
         this.status = convertStatus(post.getStatus());
         this.viewCount = post.getViewCount();

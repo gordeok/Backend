@@ -31,7 +31,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             Pageable pageable);
 
     // 동일 postId 에 대한 내 모든 참여 (후기 필터용)
-    List<Participation> findByBuyerIdAndPostId(Long buyerId, Long postId);
+    List<Participation> findAllByBuyerIdAndPostId(Long buyerId, Long postId);
 
     // 신뢰 점수 산정용
     long countByBuyerId(Long buyerId);

@@ -117,7 +117,7 @@ public class UserService {
                 .filter(review -> {
                     // reviewerId 가 해당 post 에 참여한 구매자인지 확인
                     return participationRepository
-                            .findByBuyerIdAndPostId(review.getReviewerId(), postId)
+                            .findAllByBuyerIdAndPostId(review.getReviewerId(), postId)
                             .stream().findAny().isPresent();
                 })
                 .map(review -> {

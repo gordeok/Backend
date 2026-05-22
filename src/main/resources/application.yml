@@ -10,6 +10,12 @@ spring:
       hibernate:
         format_sql: true
 
+  # 멀티파트 파일 크기 제한
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+
 server:
   port: 8080
 
@@ -17,6 +23,13 @@ ai:
   server:
     url: http://localhost:8001
 
+# 사기 탐지 AI 서버
 fraud:
   server:
     url: http://localhost:8003
+
+# 로컬 파일 업로드 설정
+file:
+  upload:
+    dir: ./uploads
+    url-prefix: /uploads

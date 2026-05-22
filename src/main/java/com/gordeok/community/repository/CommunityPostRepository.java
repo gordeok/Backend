@@ -7,21 +7,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CommunityPostRepository extends JpaRepository<CommunityPost, Long> {
 
-    // 전체 글 최신순
+    // 기존 홈화면용
     Page<CommunityPost> findAllByOrderByCreatedAtDesc(Pageable pageable);
-
-    // 전체 글 좋아요순
     Page<CommunityPost> findAllByOrderByLikeCountDescCreatedAtDesc(Pageable pageable);
+    Page<CommunityPost> findByCategoryOrderByCreatedAtDesc(String category, Pageable pageable);
+    Page<CommunityPost> findByCategoryOrderByLikeCountDescCreatedAtDesc(String category, Pageable pageable);
 
-    // 카테고리별 최신순
-    Page<CommunityPost> findByCategoryOrderByCreatedAtDesc(
-            String category,
-            Pageable pageable
-    );
-
-    // 카테고리별 좋아요순
-    Page<CommunityPost> findByCategoryOrderByLikeCountDescCreatedAtDesc(
-            String category,
-            Pageable pageable
-    );
+    // 마이페이지: 내가 작성한 커뮤니티 글
+    Page<CommunityPost> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 }

@@ -7,33 +7,36 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-    // 전체 최신순
+    // ── 기존 홈화면 조회 ──
     Page<Post> findAllByOrderByCreatedAtDesc(Pageable pageable);
-
-    // 전체 오래된순
     Page<Post> findAllByOrderByCreatedAtAsc(Pageable pageable);
 
-    // 통합 검색 (제목 + 아이돌명 + 앨범명) 최신순
     @Query("SELECT p FROM Post p WHERE p.title LIKE %:keyword% OR p.idolName LIKE %:keyword% OR p.albumName LIKE %:keyword% ORDER BY p.createdAt DESC")
     Page<Post> searchByKeywordDesc(@Param("keyword") String keyword, Pageable pageable);
 
-    // 통합 검색 (제목 + 아이돌명 + 앨범명) 오래된순
     @Query("SELECT p FROM Post p WHERE p.title LIKE %:keyword% OR p.idolName LIKE %:keyword% OR p.albumName LIKE %:keyword% ORDER BY p.createdAt ASC")
     Page<Post> searchByKeywordAsc(@Param("keyword") String keyword, Pageable pageable);
 
-    // 아이돌별 최신순
     Page<Post> findByIdolNameOrderByCreatedAtDesc(String idolName, Pageable pageable);
-
-    // 아이돌별 오래된순
     Page<Post> findByIdolNameOrderByCreatedAtAsc(String idolName, Pageable pageable);
 
-    // 아이돌별 + 통합 검색 최신순
     @Query("SELECT p FROM Post p WHERE p.idolName = :idolName AND (p.title LIKE %:keyword% OR p.albumName LIKE %:keyword%) ORDER BY p.createdAt DESC")
     Page<Post> searchByIdolNameAndKeywordDesc(@Param("idolName") String idolName, @Param("keyword") String keyword, Pageable pageable);
 
-    // 아이돌별 + 통합 검색 오래된순
     @Query("SELECT p FROM Post p WHERE p.idolName = :idolName AND (p.title LIKE %:keyword% OR p.albumName LIKE %:keyword%) ORDER BY p.createdAt ASC")
     Page<Post> searchByIdolNameAndKeywordAsc(@Param("idolName") String idolName, @Param("keyword") String keyword, Pageable pageable);
+
+    // ── 마이페이지: 판매 목록 (내가 작성한 Post, status 필터) ──
+    Page<Post> findByUserIdAndStatusOrderByCreatedAtDesc(Long userId, String status, Pageable pageable);
+
+    // ── 판매자 프로필: 최근 게시글 썸네일 (최대 4개) ──
+    List<Post> findTop4ByUserIdOrderByCreatedAtDesc(Long userId);
+
+    // ── 판매 완료된 Post의 참여자 수 (후기 보기용 보조) ──
+    @Query("SELECT COUNT(p) FROM Participation p WHERE p.post.id = :postId")
+    Long countParticipationsByPostId(@Param("postId") Long postId);
 }
